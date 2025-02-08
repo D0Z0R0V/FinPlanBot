@@ -48,6 +48,14 @@ async def wish_user(message: Message):
 async def post_tg(message: Message):
     await message.answer(text="Что дальше то...?", reply_markup=inline.post)
     
+@router.message(F.text == "Финансы")
+async def money(message: Message):
+    await message.answer(text="Выберите опцию:", reply_markup=replay.money)
+    
+@router.message(F.text == "Траты")
+async def wastes(message: Message):
+    await message.answer(text="Много не пиши...", reply_markup=inline.wastes)
+    
 @router.message(Command("reply"))
 async def cmd_reply(message: Message):
     await message.reply('Это ответ с "ответом"')

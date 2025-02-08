@@ -13,3 +13,11 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(50) NOT NULL,
     role VARCHAR(20) DEFAULT 'user'
 );
+
+CREATE TABLE IF NOT EXISTS records (
+    id SERIAL PRIMARY KEY,
+    total_sum NUMERIC(10, 2),
+    direction VARCHAR(255),
+    record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    person_name VARCHAR(255)
+);
