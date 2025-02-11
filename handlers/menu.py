@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 
 from dotenv import load_dotenv
 from keyboards import replay, inline
-import requests
+import requests, os
 
 load_dotenv()
 router = Router()
@@ -32,7 +32,11 @@ async def process_link(message: Message, state: FSMContext):
     await message.answer(f"Сокращенная ссылка: {response.text}")
     await state.clear()
 
-users = {}
+user_idd = int(os.getenv('USER_IDd'))
+user_idk = int(os.getenv('USER_IDk'))
+
+users = {user_idd: 'USER_IDd',
+         user_idk: 'USER_IDk'}
 
 def user_allowed(message: types.Message):
     return message.from_user.id in users
