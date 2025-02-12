@@ -52,3 +52,14 @@ async def delete_gift(gift_id: int, user_id: int):
             return False
     finally:
         await conn.close()
+        
+async def money_list():
+    conn = await get_connect()
+    
+    try:
+        rows = await conn.fetch(
+            
+        )
+        
+    finally:
+        await conn.close()
