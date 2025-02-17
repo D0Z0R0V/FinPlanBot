@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Таблица для хранения категорий расходов
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
-    names VARCHAR(255) NOT NULL UNIQUE -- Название категории
+    name VARCHAR(255) NOT NULL UNIQUE -- Название категории
 );
 
 -- Таблица для хранения записей о расходах
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS records (
     total_sum NUMERIC(10, 2) NOT NULL, -- Потраченная сумма
     category_id INT REFERENCES categories(id) ON DELETE CASCADE, -- Внешний ключ на категорию
     record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Дата траты
-    comment VARCHAR(255) -- Комментарий
+    comments VARCHAR(255) -- Комментарий
 );
 
 -- Таблица для хранения итогов по месяцам

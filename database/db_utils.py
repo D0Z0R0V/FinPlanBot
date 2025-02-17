@@ -58,8 +58,22 @@ async def money_list():
     
     try:
         rows = await conn.fetch(
-            
+            """SELECT r.id r.total_sum, c.name AS category, r.record_date, r.comments
+            FROM records r
+            LEFT JOIN categories c ON r.category_id = c.id
+            ORDER BY r.record_date DESC"""
         )
+        
+        return [
+            {
+                "id": row["id"],
+                "total_sum": row["total_sum"],
+                "category": row["category"],
+                "record_date": row["record_date"],
+                "comments": row["comments"],
+            }
+            for row in rows
+        ]
         
     finally:
         await conn.close()
