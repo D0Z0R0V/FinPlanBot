@@ -32,21 +32,10 @@ async def process_link(message: Message, state: FSMContext):
     await message.answer(f"Сокращенная ссылка: {response.text}")
     await state.clear()
 
-user_idd = int(os.getenv('USER_IDd'))
-user_idk = int(os.getenv('USER_IDk'))
-
-users = {user_idd: 'USER_IDd',
-         user_idk: 'USER_IDk'}
-
-def user_allowed(message: types.Message):
-    return message.from_user.id in users
 
 @router.message(F.text == "Подарки")
 async def wish_user(message: Message):
-    if user_allowed(message):
-        await message.answer(text="Доступ открыт", reply_markup=inline.wish)
-    else:
-        await message.answer(text="Только для многоуважаемых персон")
+    await message.answer(text="Доступ открыт", reply_markup=inline.wish)
         
 @router.message(F.text == "Посты")
 async def post_tg(message: Message):
@@ -59,6 +48,10 @@ async def money(message: Message):
 @router.message(F.text == "Траты")
 async def wastes(message: Message):
     await message.answer(text="Много не пиши...", reply_markup=inline.wastes)
+    
+@router.message(F.text == "Доход")
+async def income(message: Message):
+    await message.answer(text="Много пиши...", reply_markup=inline.income)
     
 @router.message(Command("reply"))
 async def cmd_reply(message: Message):

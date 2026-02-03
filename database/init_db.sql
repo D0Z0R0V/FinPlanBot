@@ -1,41 +1,60 @@
--- Таблица для хранения подарков
-CREATE TABLE IF NOT EXISTS gift (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    gift_name VARCHAR(150) NOT NULL,
-    comment VARCHAR(255),
-    names VARCHAR(50) NOT NULL,
-    is_gift BOOLEAN DEFAULT FALSE
-);
-
--- Таблица для хранения ролей с доступом (в доработке)
+-- Таблица пользователей (основная)
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     telegram_id BIGINT UNIQUE NOT NULL,
     name VARCHAR(50) NOT NULL,
-    role VARCHAR(20) DEFAULT 'user'
+    role VARCHAR(20) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица для хранения подарков (привязана к пользователю по telegram_id)
+CREATE TABLE IF NOT EXISTS gift (
+    id SERIAL PRIMARY KEY,
+    telegram_id BIGINT NOT NULL REFERENCES users(telegram_id) ON DELETE CASCADE,
+    gift_name VARCHAR(150) NOT NULL,
+    comment VARCHAR(255),
+    names VARCHAR(50) NOT NULL,
+    is_gift BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица для хранения категорий расходов
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE -- Название категории
+    telegram_id BIGINT REFERENCES users(telegram_id) ON DELETE CASCADE, -- NULL для общих категорий
+    name VARCHAR(255) NOT NULL,
+    UNIQUE(telegram_id, name) -- уникальность в рамках пользователя
 );
 
 -- Таблица для хранения записей о расходах
 CREATE TABLE IF NOT EXISTS records (
     id SERIAL PRIMARY KEY,
-    total_sum NUMERIC(10, 2) NOT NULL, -- Потраченная сумма
-    category_id INT REFERENCES categories(id) ON DELETE CASCADE, -- Внешний ключ на категорию
-    record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Дата траты
-    comments VARCHAR(255) -- Комментарий
+    telegram_id BIGINT NOT NULL REFERENCES users(telegram_id) ON DELETE CASCADE,
+    total_sum NUMERIC(10, 2) NOT NULL,
+    category_id INT REFERENCES categories(id) ON DELETE SET NULL,
+    record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    comments VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица для хранения ДОХОДОВ (новая таблица)
+CREATE TABLE IF NOT EXISTS income (
+    id SERIAL PRIMARY KEY,
+    telegram_id BIGINT NOT NULL REFERENCES users(telegram_id) ON DELETE CASCADE,
+    amount NUMERIC(10, 2) NOT NULL,
+    source VARCHAR(100), -- источник дохода (зарплата, фриланс и т.д.)
+    record_date DATE DEFAULT CURRENT_DATE,
+    comments VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица для хранения итогов по месяцам
 CREATE TABLE IF NOT EXISTS monthly_summary (
     id SERIAL PRIMARY KEY,
-    month_year DATE NOT NULL, -- Месяц и год (например, '2023-03-01' для марта 2023)
-    total_income NUMERIC(10, 2) DEFAULT 0.00, -- Общая сумма доходов
-    total_expense NUMERIC(10, 2) DEFAULT 0.00, -- Общая сумма расходов
-    net_balance NUMERIC(10, 2) DEFAULT 0.00 -- Чистый баланс (доходы - расходы)
+    telegram_id BIGINT NOT NULL REFERENCES users(telegram_id) ON DELETE CASCADE,
+    month_year DATE NOT NULL, -- Первый день месяца
+    total_income NUMERIC(10, 2) DEFAULT 0.00,
+    total_expense NUMERIC(10, 2) DEFAULT 0.00,
+    net_balance NUMERIC(10, 2) DEFAULT 0.00,
+    UNIQUE(telegram_id, month_year)
 );

@@ -10,11 +10,15 @@ async def get_connect():
         port=DB_CONFIG["port"]
     )
 
-async def get_gift_list(user_id: int):
+# ВАЖНО: параметр user_id - это на самом деле telegram_id!
+
+async def get_gift_list(telegram_id: int):
     conn = await get_connect()
     try:
         rows = await conn.fetch(
-            "SELECT id, gift_name, comment, names FROM gift") #WHERE user_id = $1", user_id
+            "SELECT id, gift_name, comment, names FROM gift WHERE telegram_id = $1", 
+            telegram_id 
+        )
         
         return [
             {"id": row["id"], "gift_name": row["gift_name"], "comment": row["comment"], "names": row["names"]}
@@ -23,12 +27,12 @@ async def get_gift_list(user_id: int):
     finally:
         await conn.close()
 
-async def add_gift(user_id: int, gift_name: str, comment: str, names: str):
+async def add_gift(telegram_id: int, gift_name: str, comment: str, names: str):
     conn = await get_connect()
     try:
         await conn.execute(
-            "INSERT INTO gift (user_id, gift_name, comment, names) VALUES ($1, $2, $3, $4)",
-            user_id,
+            "INSERT INTO gift (telegram_id, gift_name, comment, names) VALUES ($1, $2, $3, $4)",  
+            telegram_id,  
             gift_name,
             comment,
             names
@@ -36,14 +40,17 @@ async def add_gift(user_id: int, gift_name: str, comment: str, names: str):
     finally:
         await conn.close()
 
-async def delete_gift(gift_id: int, user_id: int):
+async def delete_gift(gift_id: int, telegram_id: int):  
     conn = await get_connect()
     try:
         result = await conn.execute(
-            "DELETE FROM gift WHERE id = $1 AND user_id = $2", gift_id, user_id
+            "DELETE FROM gift WHERE id = $1 AND telegram_id = $2",  
+            gift_id, 
+            telegram_id  
         )
 
         if result == "DELETE 1":
+            # Эта операция обычно не требуется, PostgreSQL сам управляет sequences
             await conn.execute(
                 "SELECT setval('gift_id_seq', COALESCE((SELECT MAX(id) FROM gift), 1), false);"
             )
@@ -52,16 +59,68 @@ async def delete_gift(gift_id: int, user_id: int):
             return False
     finally:
         await conn.close()
+
+async def get_income_list(telegram_id: int):
+    conn = await get_connect()
+    try:
+        rows = await conn.fetch(
+            """SELECT id, amount, source, record_date, comments 
+            FROM income 
+            WHERE telegram_id = $1
+            ORDER BY record_date DESC""",
+            telegram_id
+        )
         
-async def money_list():
+        return [
+            {
+                "id": row["id"],
+                "amount": row["amount"],
+                "source": row["source"],
+                "record_date": row["record_date"],
+                "comments": row["comments"],
+            }
+            for row in rows
+        ]
+    finally:
+        await conn.close()
+
+async def add_income(telegram_id: int, amount: float, source: str = None, comments: str = None):
+    conn = await get_connect()
+    try:
+        await conn.execute(
+            "INSERT INTO income (telegram_id, amount, source, comments) VALUES ($1, $2, $3, $4)",
+            telegram_id,
+            amount,
+            source,
+            comments
+        )
+    finally:
+        await conn.close()
+        
+async def delete_income(income_id: int, telegram_id: int):
+    """Удалить доход"""
+    conn = await get_connect()
+    try:
+        result = await conn.execute(
+            "DELETE FROM income WHERE id = $1 AND telegram_id = $2",
+            income_id,
+            telegram_id
+        )
+        return result == "DELETE 1"
+    finally:
+        await conn.close()
+        
+async def list_expense(telegram_id: int):
     conn = await get_connect()
     
     try:
         rows = await conn.fetch(
-            """SELECT r.id r.total_sum, c.name AS category, r.record_date, r.comments
+            """SELECT r.id, r.total_sum, c.name AS category, r.record_date, r.comments
             FROM records r
             LEFT JOIN categories c ON r.category_id = c.id
-            ORDER BY r.record_date DESC"""
+            WHERE r.telegram_id = $1  -- добавить фильтр по пользователю
+            ORDER BY r.record_date DESC""",
+            telegram_id
         )
         
         return [
@@ -77,3 +136,31 @@ async def money_list():
         
     finally:
         await conn.close()
+        
+async def add_expense(telegram_id: int, total_sum: float, category_id: int = None, comments: str = None):
+    """Добавить расход"""
+    conn = await get_connect()
+    try:
+        await conn.execute(
+            "INSERT INTO records (telegram_id, total_sum, category_id, comments) VALUES ($1, $2, $3, $4)",
+            telegram_id,
+            total_sum,
+            category_id,
+            comments
+        )
+    finally:
+        await conn.close()
+
+async def delete_expense(expense_id: int, telegram_id: int):
+    """Удалить расход"""
+    conn = await get_connect()
+    try:
+        result = await conn.execute(
+            "DELETE FROM records WHERE id = $1 AND telegram_id = $2",
+            expense_id,
+            telegram_id
+        )
+        return result == "DELETE 1"
+    finally:
+        await conn.close()
+        
