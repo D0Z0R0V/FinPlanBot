@@ -45,7 +45,7 @@ async def post_tg(message: Message):
 async def money(message: Message):
     await message.answer(text="Выберите опцию:", reply_markup=replay.money)
     
-@router.message(F.text == "Траты")
+@router.message(F.text == "Расходы")
 async def wastes(message: Message):
     await message.answer(text="Много не пиши...", reply_markup=inline.wastes)
     

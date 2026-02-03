@@ -9,6 +9,5 @@ main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Подарки"),
                            input_field_placeholder="Выберите подходящий пункт меню...")
 
 money = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Доход")],
-                                       [KeyboardButton(text="Подарки")],
-                                      [KeyboardButton(text="Траты")]],
+                                      [KeyboardButton(text="Расходы")]],
                             resize_keyboard=True)
