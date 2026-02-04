@@ -2,7 +2,7 @@ import asyncio, os, logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from handlers import menu, gift
+from handlers import menu, gift, expense
 from dotenv import load_dotenv
 from config import BOT_TOKEN
 from database.db import init_db
@@ -16,7 +16,9 @@ async def main():
     
     dp.include_routers(
         menu.router,
-        gift.router
+        gift.router,
+        expense.router
+        
     )
     
     try:

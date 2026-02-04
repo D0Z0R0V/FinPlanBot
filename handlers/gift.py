@@ -5,24 +5,25 @@ from aiogram.fsm.state import State, StatesGroup
 from database.db_utils import get_gift_list, add_gift, delete_gift
 from dotenv import load_dotenv
 
-
 load_dotenv()
 router = Router()
-
 
 class GiftStates(StatesGroup):
     ADD_GIFT = State()
     DELETE_GIFT = State()
 
-
 @router.callback_query(F.data == "view_list")
 async def list_gift(callback: CallbackQuery):
-    gifts = await get_gift_list(callback.from_user.id)
+    # Используем telegram_id пользователя
+    telegram_id = callback.from_user.id
+    gifts = await get_gift_list(telegram_id)
+    
     if not gifts:
         await callback.message.answer("Список подарков пуст. Добавьте что-то!")
     else:
         response = "\n".join(
-            [f"{gift['id']}. {gift['gift_name']} - {gift['comment']}. Подарок от {gift['names']}" for gift in gifts]
+            [f"{gift['id']}. {gift['gift_name']} - {gift['comment']}. Подарок от {gift['names']}" 
+             for gift in gifts]
         )
         await callback.message.answer(f"Список подарков:\n\n{response}")
     await callback.answer()
@@ -43,10 +44,16 @@ async def process_add_gift(message: Message, state: FSMContext):
         )
         return
 
-
+    # Получаем полное имя пользователя
     full_name = f"{message.from_user.first_name} {message.from_user.last_name}" if message.from_user.last_name else message.from_user.first_name
+    
+    # Разделяем данные
     gift_name, comment = map(str.strip, message.text.split("\\", 1))
-    await add_gift(user_id=message.from_user.id, gift_name=gift_name, comment=comment, names=full_name)
+    
+    # ИСПРАВЛЕНО: передаем telegram_id вместо user_id
+    telegram_id = message.from_user.id
+    await add_gift(telegram_id=telegram_id, gift_name=gift_name, comment=comment, names=full_name)
+    
     await message.answer(f"Подарок '{gift_name}' добавлен! От {full_name}")
     await state.clear()
 
@@ -60,7 +67,10 @@ async def delete_gift_prompt(callback: CallbackQuery, state: FSMContext):
 async def process_delete_gift(message: Message, state: FSMContext):
     try:
         gift_id = int(message.text)
-        success = await delete_gift(gift_id=gift_id, user_id=message.from_user.id)
+        # ИСПРАВЛЕНО: передаем telegram_id вместо user_id
+        telegram_id = message.from_user.id
+        success = await delete_gift(gift_id=gift_id, telegram_id=telegram_id)
+        
         if success:
             await message.answer(f"Подарок с номером {gift_id} успешно удален!")
         else:

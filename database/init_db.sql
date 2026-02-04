@@ -18,26 +18,18 @@ CREATE TABLE IF NOT EXISTS gift (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Таблица для хранения категорий расходов
-CREATE TABLE IF NOT EXISTS categories (
-    id SERIAL PRIMARY KEY,
-    telegram_id BIGINT REFERENCES users(telegram_id) ON DELETE CASCADE, -- NULL для общих категорий
-    name VARCHAR(255) NOT NULL,
-    UNIQUE(telegram_id, name) -- уникальность в рамках пользователя
-);
-
--- Таблица для хранения записей о расходах
+-- Таблица для хранения записей о расходах (упрощенная)
 CREATE TABLE IF NOT EXISTS records (
     id SERIAL PRIMARY KEY,
     telegram_id BIGINT NOT NULL REFERENCES users(telegram_id) ON DELETE CASCADE,
     total_sum NUMERIC(10, 2) NOT NULL,
-    category_id INT REFERENCES categories(id) ON DELETE SET NULL,
+    category_name VARCHAR(100) NOT NULL, -- Название категории напрямую
     record_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     comments VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Таблица для хранения ДОХОДОВ (новая таблица)
+-- Таблица для хранения ДОХОДОВ
 CREATE TABLE IF NOT EXISTS income (
     id SERIAL PRIMARY KEY,
     telegram_id BIGINT NOT NULL REFERENCES users(telegram_id) ON DELETE CASCADE,
