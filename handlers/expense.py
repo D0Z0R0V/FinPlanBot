@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from database.db_utils import add_expense, delete_expense
+from database.db_utils import add_expense, delete_expense, get_expense_list
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,6 +11,7 @@ router = Router()
 class ExpenseStates(StatesGroup):
     WAITING_AMOUNT = State()
     DELETE_EXPENSE = State()
+    
 
 # Обработчик для ВСЕХ категорий расходов
 @router.callback_query(F.data.in_(["housing", "products", "car", "nursing", "hobby", "leisure"]))
@@ -30,8 +31,8 @@ async def handle_category(callback: CallbackQuery, state: FSMContext):
     await state.update_data(category_name=category_name)
     
     await callback.message.answer(
-        f"📋 Категория: <b>{category_name}</b>\n\n"
-        "💰 Введите сумму расхода:\n"
+        f"Категория: {category_name}\n\n"
+        "Введите сумму расхода:\n"
         "Пример: 1500 или 125.50"
     )
     await state.set_state(ExpenseStates.WAITING_AMOUNT)
@@ -61,9 +62,9 @@ async def process_amount(message: Message, state: FSMContext):
         amount_str = f"{amount:.2f}".rstrip('0').rstrip('.')
         
         await message.answer(
-            f"✅ <b>Расход добавлен!</b>\n\n"
-            f"📋 Категория: {category_name}\n"
-            f"💰 Сумма: {amount_str} руб."
+            f"Расход добавлен!\n\n"
+            f"Категория: {category_name}\n"
+            f"Сумма: {amount_str} руб."
         )
         
     except ValueError:
@@ -73,8 +74,35 @@ async def process_amount(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "delete_expense")
 async def delete_expense_prompt(callback: CallbackQuery, state: FSMContext):
-    """Запрос на удаление расхода"""
-    await callback.message.answer("Введите номер расхода для удаления:")
+    """Показать список расходов и запросить номер для удаления"""
+    telegram_id = callback.from_user.id
+    
+    # Получаем последние 10 расходов
+    expenses = await get_expense_list(telegram_id, limit=10)
+    
+    if not expenses:
+        await callback.message.answer("У вас нет расходов для удаления.")
+        await callback.answer()
+        return
+    
+    # Формируем текст со списком расходов
+    expense_text = "Ваши последние расходы:\n\n"
+    
+    for expense in expenses:
+        date_str = expense['record_date'].strftime('%d.%m') if expense['record_date'] else ""
+        amount_str = f"{expense['total_sum']:.2f}".rstrip('0').rstrip('.')
+        expense_text += f"#{expense['id']} - {expense['category_name']} - {amount_str} руб."
+        if date_str:
+            expense_text += f" ({date_str})"
+        
+        if expense.get('comments'):
+            expense_text += f"\n   📝 {expense['comments'][:30]}"
+        
+        expense_text += "\n\n"
+    
+    expense_text += "👇 Введите номер расхода для удаления:\n(например: 1)"
+    
+    await callback.message.answer(expense_text)
     await state.set_state(ExpenseStates.DELETE_EXPENSE)
     await callback.answer()
 

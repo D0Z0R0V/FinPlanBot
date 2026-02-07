@@ -140,6 +140,33 @@ async def delete_expense(expense_id: int, telegram_id: int):
     finally:
         await conn.close()
         
+async def get_expense_list(telegram_id: int, limit: int = 20):
+    """Получить список расходов пользователя"""
+    conn = await get_connect()
+    try:
+        rows = await conn.fetch(
+            """SELECT id, total_sum, category_name, record_date, comments 
+            FROM records 
+            WHERE telegram_id = $1
+            ORDER BY record_date DESC, id DESC
+            LIMIT $2""",
+            telegram_id,
+            limit
+        )
+        
+        return [
+            {
+                "id": row["id"],
+                "total_sum": row["total_sum"],
+                "category_name": row["category_name"],
+                "record_date": row["record_date"],
+                "comments": row["comments"],
+            }
+            for row in rows
+        ]
+    finally:
+        await conn.close()
+        
         
 async def register_user(telegram_id: int, name: str, role: str = "user"):
     """Зарегистрировать нового пользователя"""

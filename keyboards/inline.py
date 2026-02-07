@@ -13,10 +13,12 @@ wastes = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Жи�
                                                InlineKeyboardButton(text="Машина", callback_data="car")],
                                                [InlineKeyboardButton(text="Уходовое", callback_data="nursing"),
                                                 InlineKeyboardButton(text="Хобби", callback_data="hobby"),
-                                                InlineKeyboardButton(text="Досуг", callback_data="leisure")]])
+                                                InlineKeyboardButton(text="Досуг", callback_data="leisure")],
+                                                [InlineKeyboardButton(text="Удалить расход", callback_data="delete_expense")]])
 
 income = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Подработка", callback_data="job")],
-                                               [InlineKeyboardButton(text="Зарплата", callback_data="salary")]])
+                                               [InlineKeyboardButton(text="Зарплата", callback_data="salary")],
+                                               [InlineKeyboardButton(text="Удалить доход", callback_data="delete_income")]])
 
 
 
